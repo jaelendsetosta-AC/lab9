@@ -15,4 +15,3 @@ resource "azurerm_storage_account" "storage" {
   tags = {
     environment = "lab"
   }
-}
