@@ -1,9 +1,9 @@
-name: Validate terraform fmt
+name: Terraform Verify
 on:
   pull_request:
     branches:
       - main
-      - master
+      - lab9
 
 permissions:
   id-token: write
@@ -12,23 +12,27 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    name: terraform fmt check
-    outputs:
-      CHECK_STATUS: "${{ env.CHECK_STATUS }}"
+    name: Terraform Validation
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          fetch-depth: 2
+          terraform_version: 1.2.4
+
+      # Step 3: Fetch changed files
       - name: Fetch changed files
         id: pr_files
         uses: jitterbit/get-changed-files@v1
         with:
           format: "space-delimited"
-      - name: Configure terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.2.4
-      - name: Validate terraform fmt (added_modified)
+
+      # Step 4: Validate Terraform formatting
+      - name: Validate terraform fmt
         run: |
           set +e
 
@@ -47,6 +51,25 @@ jobs:
               fi
             fi
           done
+
+      # Step 5: Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Step 6: Validate Terraform syntax
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Step 7: Install tflint
+      - name: Install tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      # Step 8: Run tflint
+      - name: Run tflint
+        run: tflint
+
+      # Step 9: Fail the job if any checks failed
       - name: Process check
         if: always()
         run: exit $CHECK_STATUS
